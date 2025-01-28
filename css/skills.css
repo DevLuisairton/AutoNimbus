@@ -1,0 +1,166 @@
+.skills {
+  padding: 60px 20px;
+  background-color: #f9f9f9;
+  text-align: center;
+}
+
+.skills__content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.tertiary-title {
+  font-size: 2.5rem;
+  color: #333;
+  margin-bottom: 20px;
+  animation: fadeIn 2s ease-in-out;
+}
+
+.tertiary-title span {
+  color: var(--primary-blue);
+}
+
+.description {
+  font-size: 1.2rem;
+  color: #666;
+  margin-bottom: 40px;
+  animation: fadeIn 2.5s ease-in-out;
+}
+
+.skills__list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 30px;
+}
+
+.skills__item {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  width: 200px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: fadeInUp 1s ease-in-out;
+}
+
+.skills__item:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.image-container {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 15px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #003A6F;
+  transition: transform 0.3s ease;
+}
+
+.image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-container:hover {
+  transform: scale(1.1);
+}
+
+.skills__item h3 {
+  font-size: 1.2rem;
+  color: #333;
+  margin-top: 10px;
+  margin-bottom: 15px;
+}
+
+.social-links {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.social-links img {
+  width: 24px;
+  height: 24px;
+  transition: transform 0.3s ease;
+}
+
+.social-links img:hover {
+  transform: scale(1.2);
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from {
+      opacity: 0;
+  }
+  to {
+      opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+      opacity: 0;
+      transform: translateY(20px);
+  }
+  to {
+      opacity: 1;
+      transform: translateY(0);
+  }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .tertiary-title {
+      font-size: 2rem;
+  }
+
+  .skills__item {
+      width: 150px;
+  }
+
+  .image-container {
+      width: 80px;
+      height: 80px;
+  }
+
+  .skills__item h3 {
+      font-size: 1rem;
+  }
+
+  .social-links img {
+      width: 20px;
+      height: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tertiary-title {
+      font-size: 1.5rem;
+  }
+
+  .skills__item {
+      width: 120px;
+  }
+
+  .image-container {
+      width: 60px;
+      height: 60px;
+  }
+
+  .skills__item h3 {
+      font-size: 0.9rem;
+  }
+
+  .social-links img {
+      width: 18px;
+      height: 18px;
+  }
+}
