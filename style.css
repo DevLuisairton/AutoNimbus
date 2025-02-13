@@ -35,9 +35,11 @@ body {
 }
 
 .logo {
+  text-decoration: none;
   color: white;
   font-size: 1.8rem;
   font-weight: bold;
+  cursor: pointer;
 }
 
 .nav-links {

@@ -23,7 +23,7 @@
     align-items: center;
     text-decoration: none;
     color: inherit;
-    transition: transform 0.3s ease;
+    transition: transform 0.4s ease;
 }
 
 .carousel-item:hover {
