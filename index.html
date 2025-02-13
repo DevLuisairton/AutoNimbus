@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="css/skills.css">
     <link rel="stylesheet" href="css/documentacao.css">
     <link rel="stylesheet" href="css/sobre.css">
+    <link rel="stylesheet" href="css/carrossel.css">
     <script src="script.js" defer></script>
     <title>AutoNimbus - Arquitetura em Cloud</title>
 </head>
@@ -167,28 +168,46 @@
 
     <!--Documentação-->
     <section class="documentacao" id="documentacao">
-        <div class="documentacao-content">
-            <h2 class="documentacao-title">Documentação</h2>
-            <div class="documentacao-text">
+        <div class="carousel-container">
+            <div class="carousel">
+                <a href="/docs/compute" class="carousel-item">
+                    <img src="/assets/drawio-logo2.png" alt="Computação em Nuvem">
+                    <h2>Arquitetura</h2>
+                    <p>A arquitetura Cloud da AutoNimbus é focada em automação, garantindo escalabilidade, segurança e
+                        alta disponibilidade. Utilizamos serviços gerenciados para otimizar processos, com controle de
+                        acesso, monitoramento contínuo e recuperação eficiente, assegurando desempenho e continuidade
+                        dos serviços.</p>
+                    <span class="read-more">Ler Documentação</span>
+                </a>
+                <a href="/docs/storage" class="carousel-item">
+                    <img src="/api/placeholder/400/250" alt="Armazenamento">
+                    <h2>Armazenamento</h2>
+                    <p>Descubra as melhores práticas para armazenamento em nuvem, backup e recuperação de dados com
+                        nossa documentação detalhada.</p>
+                    <span class="read-more">Ler Documentação</span>
+                </a>
+                <a href="/docs/security" class="carousel-item">
+                    <img src="/api/placeholder/400/250" alt="Segurança">
+                    <h2>Segurança</h2>
+                    <p>Aprenda sobre nossos protocolos de segurança, conformidade e melhores práticas para proteger seus
+                        dados na nuvem.</p>
+                    <span class="read-more">Ler Documentação</span>
+                </a>
+                <a href="/docs/networking" class="carousel-item">
+                    <img src="/api/placeholder/400/250" alt="Redes">
+                    <h2>Redes</h2>
+                    <p>Guia completo sobre redes em nuvem, incluindo VPCs, balanceamento de carga e conectividade
+                        híbrida.</p>
+                    <span class="read-more">Ler Documentação</span>
+                </a>
             </div>
-            <div class="documentacao-image">
-                <a href="https://www.canva.com/design/DAGdc3-FP80/uoAbTN7AOYeGXc-yz7YHwQ/edit?utm_content=DAGdc3-FP80&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton"
-                    target="_blank"><img src="assets/Slide.png" alt="Slide TCC"></a>
-            </div>
-            <div class="documentacao-image">
-                <a href="https://github.com/DevLuisairton/AutoNimbus"
-                    target="_blank"><img src="assets/GitHub-logo.png" alt="Slide TCC"></a>
-            </div>
-            <div class="documentacao-image">
-                <a href="https://trello.com/b/DPSyub4r/automa%C3%A7%C3%A3o-da-infraestrutura?completedInviteSignup=1"
-                    target="_blank"><img src="assets/logo-trello.png" alt="Slide TCC"></a>
-            </div>
-            <div class="documentacao-image">
-                <a href=""
-                    target="_blank"><img src="assets/drawio-logo2.png" alt="Slide TCC"></a>
-            </div>
+            <button class="carousel-button prev">←</button>
+            <button class="carousel-button next">→</button>
+            <div class="carousel-nav"></div>
         </div>
     </section>
+
+
 
     <footer>
         <p>&copy; 2025 AutoNimbus. Todos os direitos reservados.</p>

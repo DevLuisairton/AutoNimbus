@@ -1,0 +1,132 @@
+.carousel-container {
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.carousel {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+    height: 500px;
+}
+
+.carousel-item {
+    min-width: 100%;
+    padding: 2rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.3s ease;
+}
+
+.carousel-item:hover {
+    transform: scale(1.02);
+}
+
+.carousel-item img {
+    width: 100%;
+    max-width: 400px;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-item h2 {
+    color: #2d3748;
+    margin: 1rem 0;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.carousel-item p {
+    color: #4a5568;
+    line-height: 1.6;
+    text-align: center;
+    max-width: 600px;
+}
+
+.carousel-nav {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.carousel-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #cbd5e0;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.carousel-dot.active {
+    background: #4299e1;
+}
+
+.carousel-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(66, 153, 225, 0.8);
+    border: none;
+    color: white;
+    padding: 1rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.3s ease;
+    z-index: 10;
+}
+
+.carousel-button:hover {
+    background: rgba(66, 153, 225, 1);
+}
+
+.carousel-button.prev {
+    left: 1rem;
+}
+
+.carousel-button.next {
+    right: 1rem;
+}
+
+.read-more {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background: #4299e1;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background 0.3s ease;
+}
+
+.read-more:hover {
+    background: #3182ce;
+}
+
+@media (max-width: 640px) {
+    .carousel-button {
+        padding: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .carousel-item img {
+        max-width: 100%;
+        height: 200px;
+    }
+
+    .carousel {
+        height: auto;
+    }
+}
