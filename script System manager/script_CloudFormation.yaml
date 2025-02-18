@@ -1,8 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Modelo AutoNimbus atualizado e funcional'
+Description: >
+  CloudFormation template para a arquitetura AutoNimbus.
 
 Resources:
-  # Criação da VPC
+  # VPC
   NovaTechVPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -13,40 +14,31 @@ Resources:
         - Key: Name
           Value: NovaTechVPC
 
-  # Internet Gateway e anexação à VPC
-  InternetGateway:
-    Type: AWS::EC2::InternetGateway
-
-  IGWAttachment:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      VpcId: !Ref NovaTechVPC
-      InternetGatewayId: !Ref InternetGateway
-
-  # Subnets públicas e privadas
-  PublicSubnetA:
+  # Subnets Públicas
+  PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref NovaTechVPC
       CidrBlock: 10.0.1.0/24
-      MapPublicIpOnLaunch: true
       AvailabilityZone: us-east-1a
+      MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: PublicSubnetA
+          Value: PublicSubnet1
 
-  PublicSubnetB:
+  PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref NovaTechVPC
       CidrBlock: 10.0.2.0/24
-      MapPublicIpOnLaunch: true
       AvailabilityZone: us-east-1b
+      MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: PublicSubnetB
+          Value: PublicSubnet2
 
-  PrivateSubnetA:
+  # Subnets Privadas
+  PrivateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref NovaTechVPC
@@ -54,9 +46,9 @@ Resources:
       AvailabilityZone: us-east-1a
       Tags:
         - Key: Name
-          Value: PrivateSubnetA
+          Value: PrivateSubnet1
 
-  PrivateSubnetB:
+  PrivateSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref NovaTechVPC
@@ -64,155 +56,114 @@ Resources:
       AvailabilityZone: us-east-1b
       Tags:
         - Key: Name
-          Value: PrivateSubnetB
+          Value: PrivateSubnet2
 
-  # Tabela de Rotas e Associação
-  RouteTable:
-    Type: AWS::EC2::RouteTable
+  # Internet Gateway
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: NovaTechIGW
+
+  # Anexando IGW à VPC
+  AttachInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref NovaTechVPC
+      InternetGatewayId: !Ref InternetGateway
 
-  PublicRoute:
-    Type: AWS::EC2::Route
+  # Load Balancer
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      RouteTableId: !Ref RouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGateway
+      Name: AutoNimbusALB
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Scheme: internet-facing
+      Type: application
+      IpAddressType: ipv4
 
-  SubnetRouteTableAssociationA:
-    Type: AWS::EC2::SubnetRouteTableAssociation
+  # Instâncias EC2
+  EC2Instance1:
+    Type: AWS::EC2::Instance
     Properties:
-      SubnetId: !Ref PublicSubnetA
-      RouteTableId: !Ref RouteTable
+      InstanceType: t3.medium
+      ImageId: ami-0abcdef1234567890  # Substituir pela AMI que será usada
+      SubnetId: !Ref PublicSubnet1
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      Tags:
+        - Key: Name
+          Value: AutoNimbus-EC2-1
 
-  SubnetRouteTableAssociationB:
-    Type: AWS::EC2::SubnetRouteTableAssociation
+  EC2Instance2:
+    Type: AWS::EC2::Instance
     Properties:
-      SubnetId: !Ref PublicSubnetB
-      RouteTableId: !Ref RouteTable
+      InstanceType: t3.medium
+      ImageId: ami-0abcdef1234567890  # Substituir pela AMI que será usada
+      SubnetId: !Ref PublicSubnet2
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      Tags:
+        - Key: Name
+          Value: AutoNimbus-EC2-2
 
-  # Security Groups
-  WebSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Enable HTTP and secure SSH access
-      VpcId: !Ref NovaTechVPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-      SecurityGroupEgress:
-        - IpProtocol: -1
-          CidrIp: 0.0.0.0/0
-
-  DatabaseSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Allow RDS access from Web instances
-      VpcId: !Ref NovaTechVPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 3306
-          ToPort: 3306
-          SourceSecurityGroupId: !Ref WebSecurityGroup
-
-  # IAM Role para EC2
-  EC2IAMRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ec2.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: EC2AccessS3
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action: s3:*
-                Resource: '*'
-
-  # Launch Template
-  LaunchTemplate:
-    Type: AWS::EC2::LaunchTemplate
-    Properties:
-      LaunchTemplateData:
-        ImageId: ami-0c55b159cbfafe1f0  # AMI Amazon Linux 2
-        InstanceType: t3.medium
-        SecurityGroupIds:
-          - !Ref WebSecurityGroup
-        IamInstanceProfile:
-          Arn: !GetAtt EC2IAMRole.Arn
-        UserData:
-          Fn::Base64: !Sub |
-            #!/bin/bash
-            yum update -y
-            amazon-linux-extras enable nginx1
-            yum install -y nginx
-            systemctl start nginx
-            systemctl enable nginx
-
-  # RDS Subnet Group
+  # Banco de Dados RDS
   RDSSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
-      DBSubnetGroupDescription: Subnet group for RDS
+      DBSubnetGroupDescription: "Grupo de subnets para o RDS"
       SubnetIds:
-        - !Ref PrivateSubnetA
-        - !Ref PrivateSubnetB
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
 
-  # Secrets Manager para senha do RDS
-  RDSSecret:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      Name: RDSMasterPassword
-      SecretString: '{"username":"admin","password":"SuperSecurePass123!"}'
-
-  # RDS Instance
   RDSInstance:
     Type: AWS::RDS::DBInstance
     Properties:
-      DBInstanceIdentifier: autonimbus-db
-      AllocatedStorage: 100
       DBInstanceClass: db.t3.medium
-      Engine: mysql
-      MasterUsername: !Sub '{{resolve:secretsmanager:RDSMasterPassword:SecretString:username}}'
-      MasterUserPassword: !Sub '{{resolve:secretsmanager:RDSMasterPassword:SecretString:password}}'
-      VPCSecurityGroups:
-        - !Ref DatabaseSecurityGroup
+      Engine: MySQL
+      MasterUsername: admin  # Substituir por um nome seguro
+      MasterUserPassword: "ExamplePassword123!"  # Melhor usar Secrets Manager
+      AllocatedStorage: 20
       DBSubnetGroupName: !Ref RDSSubnetGroup
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroup
+      MultiAZ: true
 
-  # Load Balancer, Target Group e Listener
-  LoadBalancer:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+  # CloudFront
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
     Properties:
-      Subnets:
-        - !Ref PublicSubnetA
-        - !Ref PublicSubnetB
-      SecurityGroups:
-        - !Ref WebSecurityGroup
-      Scheme: internet-facing
-      Type: application
+      DistributionConfig:
+        Origins:
+          - DomainName: !Sub "${S3Bucket}.s3.amazonaws.com"
+            Id: S3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+        Enabled: true
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
 
-  TargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+  # Route 53
+  Route53RecordSet:
+    Type: AWS::Route53::RecordSet
     Properties:
-      VpcId: !Ref NovaTechVPC
-      Protocol: HTTP
-      Port: 80
-      TargetType: instance
+      HostedZoneId: Z3ABCDEFGH1234  # Substituir pelo Hosted Zone ID real
+      Name: autonimbus.novatech.com
+      Type: A
+      AliasTarget:
+        HostedZoneId: Z2FDTNDATAQYW2  # Hosted Zone ID fixo para CloudFront
+        DNSName: !GetAtt CloudFrontDistribution.DomainName
 
-  Listener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      LoadBalancerArn: !Ref LoadBalancer
-      Protocol: HTTP
-      Port: 80
-      DefaultActions:
-        - Type: forward
-          TargetGroupArn: !Ref TargetGroup
+Outputs:
+  LoadBalancerDNS:
+    Value: !GetAtt ApplicationLoadBalancer.DNSName
+  CloudFrontURL:
+    Value: !GetAtt CloudFrontDistribution.DomainName
