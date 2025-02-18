@@ -1,8 +1,8 @@
-AWSTemplateFormatVersion: '2010-09-09' 
-Description: 'Modelo AutoNimbus '
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Modelo AutoNimbus atualizado e funcional'
 
 Resources:
-  # Criação da VPC principal para a infraestrutura
+  # Criação da VPC
   NovaTechVPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -13,30 +13,28 @@ Resources:
         - Key: Name
           Value: NovaTechVPC
 
-  # Criando um Internet Gateway para permitir comunicação com a internet
+  # Internet Gateway e anexação à VPC
   InternetGateway:
     Type: AWS::EC2::InternetGateway
 
-  # Anexando o Internet Gateway à VPC
   IGWAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref NovaTechVPC
       InternetGatewayId: !Ref InternetGateway
 
-  # Criando uma Subnet Pública na zona de disponibilidade us-east-1a
+  # Subnets públicas e privadas
   PublicSubnetA:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref NovaTechVPC
       CidrBlock: 10.0.1.0/24
-      MapPublicIpOnLaunch: true  # Permite IPs públicos para instâncias lançadas nesta subnet
+      MapPublicIpOnLaunch: true
       AvailabilityZone: us-east-1a
       Tags:
         - Key: Name
           Value: PublicSubnetA
 
-  # Criando uma Subnet Pública na zona de disponibilidade us-east-1b
   PublicSubnetB:
     Type: AWS::EC2::Subnet
     Properties:
@@ -48,7 +46,6 @@ Resources:
         - Key: Name
           Value: PublicSubnetB
 
-  # Criando uma Subnet Privada na zona de disponibilidade us-east-1a
   PrivateSubnetA:
     Type: AWS::EC2::Subnet
     Properties:
@@ -59,7 +56,6 @@ Resources:
         - Key: Name
           Value: PrivateSubnetA
 
-  # Criando uma Subnet Privada na zona de disponibilidade us-east-1b
   PrivateSubnetB:
     Type: AWS::EC2::Subnet
     Properties:
@@ -70,13 +66,12 @@ Resources:
         - Key: Name
           Value: PrivateSubnetB
 
-  # Criando uma Tabela de Rotas para a VPC
+  # Tabela de Rotas e Associação
   RouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref NovaTechVPC
 
-  # Criando uma Rota que direciona tráfego da Tabela de Rotas para a Internet via IGW
   PublicRoute:
     Type: AWS::EC2::Route
     Properties:
@@ -84,42 +79,75 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
 
-  # Criando um Load Balancer para distribuir tráfego entre as instâncias
-  LoadBalancer:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+  SubnetRouteTableAssociationA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      Name: AutoNimbus-LB
-      Subnets:
-        - !Ref PublicSubnetA
-        - !Ref PublicSubnetB
-      SecurityGroups:
-        - !Ref WebSecurityGroup
-      Scheme: internet-facing  # Load Balancer acessível pela internet
-      Type: application  # Tipo Application Load Balancer (ALB)
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref RouteTable
 
-  # Criando um Auto Scaling Group para gerenciamento automático de instâncias EC2
-  AutoScalingGroup:
-    Type: AWS::AutoScaling::AutoScalingGroup
+  SubnetRouteTableAssociationB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      VPCZoneIdentifier:
-        - !Ref PublicSubnetA
-        - !Ref PublicSubnetB
-      LaunchTemplate:
-        LaunchTemplateId: !Ref LaunchTemplate
-        Version: !GetAtt LaunchTemplate.LatestVersionNumber
-      MinSize: 3  # Mínimo de 3 instâncias
-      MaxSize: 6  # Máximo de 6 instâncias
-      DesiredCapacity: 3  # Capacidade desejada de 3 instâncias
+      SubnetId: !Ref PublicSubnetB
+      RouteTableId: !Ref RouteTable
 
-  # Criando um Launch Template para as instâncias do Auto Scaling Group
+  # Security Groups
+  WebSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable HTTP and secure SSH access
+      VpcId: !Ref NovaTechVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow RDS access from Web instances
+      VpcId: !Ref NovaTechVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref WebSecurityGroup
+
+  # IAM Role para EC2
+  EC2IAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: EC2AccessS3
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:*
+                Resource: '*'
+
+  # Launch Template
   LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
       LaunchTemplateData:
-        ImageId: ami-12345678  # ID da AMI da instância EC2
+        ImageId: ami-0c55b159cbfafe1f0  # AMI Amazon Linux 2
         InstanceType: t3.medium
         SecurityGroupIds:
           - !Ref WebSecurityGroup
+        IamInstanceProfile:
+          Arn: !GetAtt EC2IAMRole.Arn
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
@@ -129,90 +157,62 @@ Resources:
             systemctl start nginx
             systemctl enable nginx
 
-  # Criando um Security Group para as instâncias Web
-  WebSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
+  # RDS Subnet Group
+  RDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
     Properties:
-      GroupDescription: Enable HTTP and SSH access
-      VpcId: !Ref NovaTechVPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0  # Permitir acesso HTTP público
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0  # Permitir acesso SSH público (não recomendado em produção)
-
-  # Criando um Banco de Dados RDS MySQL
-  RDSInstance:
-    Type: AWS::RDS::DBInstance
-    Properties:
-      DBInstanceIdentifier: autonimbus-db
-      AllocatedStorage: 100  # 100GB de armazenamento
-      DBInstanceClass: db.t3.medium
-      Engine: mysql
-      MasterUsername: admin
-      MasterUserPassword: password123  # Senha deve ser armazenada com segurança (ex.: Secrets Manager)
-      VPCSecurityGroups:
-        - !Ref DatabaseSecurityGroup
-      DBSubnetGroupName: !Ref RDSSubnetGroup
-
-  # Criando um Security Group para o Banco de Dados
-  DatabaseSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Allow RDS access
-      VpcId: !Ref NovaTechVPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 3306
-          ToPort: 3306
-          SourceSecurityGroupId: !Ref WebSecurityGroup  # Permite acesso apenas de instâncias web
-
-  # Criando uma distribuição CloudFront para servir conteúdo estático
-  CloudFrontDistribution:
-    Type: AWS::CloudFront::Distribution
-    Properties:
-      DistributionConfig:
-        Origins:
-          - DomainName: !Sub '${S3Bucket}.s3.amazonaws.com'
-            Id: S3Origin
-            S3OriginConfig: {}
-        Enabled: true  # Ativa a distribuição
-
-  # Criando um Grupo de Logs no CloudWatch
-  CloudWatchLogs:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: /aws/autonimbus/logs  # Nome do grupo de logs no CloudWatch
-
-  # Criando um CloudTrail para auditoria e monitoramento de atividades na conta AWS
-  CloudTrail:
-    Type: AWS::CloudTrail::Trail
-    Properties:
-      TrailName: AutoNimbusTrail
-      S3BucketName: !Ref CloudTrailS3Bucket  # Armazena logs no S3
-
-  # Criando um Bucket S3 para armazenar logs do CloudTrail
-  CloudTrailS3Bucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: autonimbus-cloudtrail-logs
-
-  # Criando um Endpoint do AWS Systems Manager para acesso seguro à instâncias na VPC privada
-  SystemManagerEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref NovaTechVPC
-      ServiceName: com.amazonaws.us-east-1.ssm
-      VpcEndpointType: Interface
+      DBSubnetGroupDescription: Subnet group for RDS
       SubnetIds:
         - !Ref PrivateSubnetA
         - !Ref PrivateSubnetB
 
-Outputs:
-  # Exibe o DNS do Load Balancer ao final da implantação
-  LoadBalancerDNS:
-    Value: !GetAtt LoadBalancer.DNSName
+  # Secrets Manager para senha do RDS
+  RDSSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: RDSMasterPassword
+      SecretString: '{"username":"admin","password":"SuperSecurePass123!"}'
+
+  # RDS Instance
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: autonimbus-db
+      AllocatedStorage: 100
+      DBInstanceClass: db.t3.medium
+      Engine: mysql
+      MasterUsername: !Sub '{{resolve:secretsmanager:RDSMasterPassword:SecretString:username}}'
+      MasterUserPassword: !Sub '{{resolve:secretsmanager:RDSMasterPassword:SecretString:password}}'
+      VPCSecurityGroups:
+        - !Ref DatabaseSecurityGroup
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+
+  # Load Balancer, Target Group e Listener
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Subnets:
+        - !Ref PublicSubnetA
+        - !Ref PublicSubnetB
+      SecurityGroups:
+        - !Ref WebSecurityGroup
+      Scheme: internet-facing
+      Type: application
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref NovaTechVPC
+      Protocol: HTTP
+      Port: 80
+      TargetType: instance
+
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Protocol: HTTP
+      Port: 80
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
